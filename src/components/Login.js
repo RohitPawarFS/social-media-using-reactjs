@@ -1,4 +1,8 @@
 import React, { Component } from 'react';
+import { Redirect } from 'react-router-dom';
+import { connect } from 'react-redux';
+
+import { login, clearAuthState } from '../actions/auth';
 
 class Login extends Component {
   constructor(props) {
@@ -9,6 +13,10 @@ class Login extends Component {
       email: '',
       password: '',
     };
+  }
+
+  componentWillUnmount() {
+    this.props.dispatch(clearAuthState());
   }
 
   handleEmailChange = (e) => {
@@ -26,13 +34,25 @@ class Login extends Component {
   handleFormSubmit = (e) => {
     e.preventDefault();
     // console.log('this.emailInputRef', this.emailInputRef);
-    // console.log('this.passwordInputRef', this.emailInputRef);
+    // console.log('this.passwordInputRef', this.passwordInputRef);
     console.log('this.state', this.state);
+    const { email, password } = this.state;
+
+    if (email && password) {
+      this.props.dispatch(login(email, password));
+    }
   };
+
   render() {
+    const { error, inProgress, isLoggedin } = this.props.auth;
+
+    if (isLoggedin) {
+      return <Redirect to="/" />;
+    }
     return (
       <form className="login-form">
-        <span className="login-signup-header">Log In </span>
+        <span className="login-signup-header">Log In</span>
+        {error && <div className="alert error-dailog">{error}</div>}
         <div className="field">
           <input
             type="email"
@@ -54,10 +74,24 @@ class Login extends Component {
           />
         </div>
         <div className="field">
-          <button onClick={this.handleFormSubmit}>Log In</button>
+          {inProgress ? (
+            <button onClick={this.handleFormSubmit} disabled={inProgress}>
+              Logging in...
+            </button>
+          ) : (
+            <button onClick={this.handleFormSubmit} disabled={inProgress}>
+              Log In
+            </button>
+          )}
         </div>
       </form>
     );
   }
 }
-export default Login;
+
+function mapStateToProps(state) {
+  return {
+    auth: state.auth,
+  };
+}
+export default connect(mapStateToProps)(Login);
